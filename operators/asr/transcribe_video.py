@@ -91,6 +91,34 @@ def media_duration(input_path: Path) -> Optional[float]:
         return None
 
 
+def media_has_audio(input_path: Path) -> Optional[bool]:
+    """Return whether the media has an audio stream when ffprobe is available."""
+    ffprobe = shutil.which("ffprobe")
+    if not ffprobe:
+        return None
+
+    completed = subprocess.run(
+        [
+            ffprobe,
+            "-v",
+            "error",
+            "-select_streams",
+            "a:0",
+            "-show_entries",
+            "stream=index",
+            "-of",
+            "csv=p=0",
+            str(input_path),
+        ],
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+    if completed.returncode != 0:
+        return None
+    return bool(completed.stdout.strip())
+
+
 def json_value(value: Any) -> Any:
     """Convert model output values into JSON-compatible Python values."""
     if value is None or isinstance(value, (str, int, float, bool)):
@@ -114,6 +142,20 @@ def transcribe(
     word_timestamps: bool = False,
 ) -> Dict[str, Any]:
     """Run MLX Whisper and return a JSON-compatible result document."""
+    duration = media_duration(input_path)
+    audio_present = media_has_audio(input_path)
+    if audio_present is False:
+        return {
+            "source": str(input_path),
+            "model": model,
+            "generated_at": datetime.now(timezone.utc).isoformat(),
+            "duration_seconds": duration,
+            "audio_present": False,
+            "language": None,
+            "text": "",
+            "segments": [],
+        }
+
     cache_path = model_cache.expanduser().resolve()
     hub_cache = cache_path / "hub"
     xet_cache = cache_path / "xet"
@@ -139,7 +181,8 @@ def transcribe(
         "source": str(input_path),
         "model": model,
         "generated_at": datetime.now(timezone.utc).isoformat(),
-        "duration_seconds": media_duration(input_path),
+        "duration_seconds": duration,
+        "audio_present": audio_present,
         "language": normalized.get("language"),
         "text": normalized.get("text", "").strip(),
         "segments": normalized.get("segments", []),

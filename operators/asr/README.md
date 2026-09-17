@@ -37,3 +37,6 @@ python3 operators/asr/transcribe_video.py \
 Use `--word-timestamps` to include word-level timestamps. Models are cached in
 `~/.cache/demoai-data/asr` by default; override that location with
 `--model-cache`.
+
+Videos without an audio stream are valid inputs. They produce a successful JSON
+result with `audio_present: false`, empty text, and no transcript segments.
