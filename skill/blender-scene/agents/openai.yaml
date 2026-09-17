@@ -1,0 +1,8 @@
+interface:
+  display_name: "Blender Scene"
+  short_description: "Generate reviewed Blender scenes from text descriptions"
+  brand_color: "#C86B2A"
+  default_prompt: "Use $blender-scene to build and render a Blender scene from my description."
+
+policy:
+  allow_implicit_invocation: true
