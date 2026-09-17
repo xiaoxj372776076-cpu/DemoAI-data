@@ -1,0 +1,17 @@
+numpy>=1.26
+opencv-python>=4.10
+torch>=2.2
+torchvision>=0.17
+pytorch-lightning==2.2.4
+torchmetrics==1.4.0
+setuptools<81
+yacs>=0.1.8
+timm>=0.9
+einops>=0.7
+scikit-image>=0.22
+smplx==0.1.28
+omegaconf>=2.3,<3
+ultralytics>=8.3
+dill>=0.3
+lap>=0.5.12
+chumpy @ git+https://github.com/mattloper/chumpy@580566eafc9ac68b2614b64d6f7aaa84eebb70da
