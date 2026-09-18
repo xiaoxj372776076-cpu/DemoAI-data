@@ -1,0 +1,4 @@
+mlx
+mlx-vlm
+pillow
+pymupdf

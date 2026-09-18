@@ -411,7 +411,12 @@ def write_text(path: Path, content: str) -> Path:
     return path
 
 
-def render_html_to_png(html: str, png_path: Path, width: int = 1100) -> Path:
+def render_html_to_png(
+    html: str,
+    png_path: Path,
+    width: int = 1100,
+    user_css: Optional[str] = None,
+) -> Path:
     """Rasterise an HTML document into a single PNG using PyMuPDF's story API."""
     try:
         import pymupdf
@@ -424,7 +429,7 @@ def render_html_to_png(html: str, png_path: Path, width: int = 1100) -> Path:
     png_path.parent.mkdir(parents=True, exist_ok=True)
     with tempfile.TemporaryDirectory() as workspace:
         pdf_path = Path(workspace) / "story.pdf"
-        story = pymupdf.Story(html=html, user_css=HTML_STYLE)
+        story = pymupdf.Story(html=html, user_css=user_css or HTML_STYLE)
         writer = pymupdf.DocumentWriter(str(pdf_path))
         # A page slightly wider than A4 keeps wide result tables from overflowing.
         mediabox = pymupdf.Rect(0, 0, 720, 960)
@@ -483,6 +488,64 @@ def cleanup_directory(path: Path) -> None:
         pass
 
 
+class DocumentModel:
+    """A loaded dots.ocr handle that can answer many pages in one process.
+
+    Loading a vision-language model costs tens of seconds and a few gigabytes,
+    so multi-page callers should build this once and reuse it for every page
+    instead of paying the load cost again per page.
+    """
+
+    def __init__(self, model: Any, processor: Any, model_path: str) -> None:
+        self.model = model
+        self.processor = processor
+        self.model_path = model_path
+
+    @classmethod
+    def load(cls, model_name: Optional[str] = None) -> "DocumentModel":
+        try:
+            from mlx_vlm import load
+        except ImportError as error:  # pragma: no cover - dependency hint
+            raise RuntimeError(
+                "mlx-vlm is required for document OCR (pip install mlx-vlm)"
+            ) from error
+
+        model_path = resolve_model(model_name)
+        model, processor = load(model_path)
+        return cls(model, processor, model_path)
+
+    def generate(
+        self,
+        image: Path,
+        prompt_mode: str = "layout_all",
+        max_tokens: int = 8192,
+    ) -> str:
+        """Return the raw model answer for one page image."""
+        try:
+            from mlx_vlm import generate
+            from mlx_vlm.prompt_utils import apply_chat_template
+        except ImportError as error:  # pragma: no cover - dependency hint
+            raise RuntimeError(
+                "mlx-vlm is required for document OCR (pip install mlx-vlm)"
+            ) from error
+
+        if prompt_mode not in PROMPTS:
+            raise ValueError(f"unknown prompt mode: {prompt_mode}")
+        prompt = apply_chat_template(
+            self.processor, self.model.config, PROMPTS[prompt_mode], num_images=1
+        )
+        output = generate(
+            self.model,
+            self.processor,
+            prompt,
+            image=str(image),
+            max_tokens=max_tokens,
+            temperature=0.0,
+            verbose=False,
+        )
+        return getattr(output, "text", str(output))
+
+
 def run_model(
     image: Path,
     model_name: str,
@@ -490,29 +553,8 @@ def run_model(
     max_tokens: int,
 ) -> Tuple[str, str]:
     """Load the MLX model and return (raw answer, resolved model name)."""
-    try:
-        from mlx_vlm import generate, load
-        from mlx_vlm.prompt_utils import apply_chat_template
-    except ImportError as error:  # pragma: no cover - dependency hint
-        raise RuntimeError(
-            "mlx-vlm is required for document OCR (pip install mlx-vlm)"
-        ) from error
-
-    model_path = resolve_model(model_name)
-    model, processor = load(model_path)
-    prompt = apply_chat_template(
-        processor, model.config, PROMPTS[prompt_mode], num_images=1
-    )
-    output = generate(
-        model,
-        processor,
-        prompt,
-        image=str(image),
-        max_tokens=max_tokens,
-        temperature=0.0,
-        verbose=False,
-    )
-    return getattr(output, "text", str(output)), model_path
+    handle = DocumentModel.load(model_name)
+    return handle.generate(image, prompt_mode, max_tokens), handle.model_path
 
 
 def parse_document(

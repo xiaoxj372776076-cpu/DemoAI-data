@@ -22,3 +22,8 @@ Data processing pipelines for DemoAI
 - [Document OCR operator](operators/doc_ocr/README.md): parse a document page
   (image, or one page of a PDF) into semantic HTML with dots.ocr, and write a
   structured JSON with per-block bbox, category and text.
+- [PDF OCR operator](operators/pdf_ocr/README.md): the multi-page version of the
+  document OCR operator — rasterise every page of a PDF, parse them with one
+  loaded dots.ocr handle, and merge the results back into a single HTML document
+  and JSON in the original page order. Every page must parse for the run to
+  succeed.
