@@ -19,3 +19,6 @@ Data processing pipelines for DemoAI
 - [Hand pose operator](operators/hand_pose/README.md): estimate both hands in a
   video with HaWoR, decode 21 MANO joints per hand, and render the skeleton onto
   a new video. Requires an external HaWoR checkout and MANO assets.
+- [Document OCR operator](operators/doc_ocr/README.md): parse a document page
+  (image, or one page of a PDF) into semantic HTML with dots.ocr, and write a
+  structured JSON with per-block bbox, category and text.
