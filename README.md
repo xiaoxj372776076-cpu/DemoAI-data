@@ -16,3 +16,6 @@ Data processing pipelines for DemoAI
 - [Image-text consistency operator](operators/image_text_consistency/README.md):
   score how well a local image matches one or more texts with a Chinese CLIP
   model.
+- [Hand pose operator](operators/hand_pose/README.md): estimate both hands in a
+  video with HaWoR, decode 21 MANO joints per hand, and render the skeleton onto
+  a new video. Requires an external HaWoR checkout and MANO assets.

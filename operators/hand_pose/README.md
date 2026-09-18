@@ -25,8 +25,13 @@ weights/external/detector.pt
 weights/hawor/model_config.yaml
 weights/hawor/checkpoints/hawor.ckpt
 _DATA/data/mano/MANO_RIGHT.pkl
+_DATA/data/mano_mean_params.npz
 _DATA/data_left/mano_left/MANO_LEFT.pkl
 ```
+
+`mano_mean_params.npz` ships with the MANO release alongside the two hand
+models and is required by the left-hand MANO layer; without it inference fails
+with `No such file or directory: '_DATA/data//mano_mean_params.npz'`.
 
 Download HaWoR weights from the project's official release and obtain MANO
 assets under the MANO license. Model assets are intentionally not committed to

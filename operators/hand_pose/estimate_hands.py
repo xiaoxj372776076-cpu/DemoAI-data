@@ -845,7 +845,15 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         atomic_json_write(result, keypoints_path)
         render_video(args.input, frame_dir, result, video_output, info)
         if not args.keep_cache:
-            shutil.rmtree(frame_dir)
+            # Both artifacts are already on disk, so a failure to drop the
+            # frame cache is a warning rather than a job failure.
+            try:
+                shutil.rmtree(frame_dir)
+            except OSError as cleanup_error:
+                print(
+                    f"Warning: could not remove frame cache {frame_dir}: {cleanup_error}",
+                    file=sys.stderr,
+                )
     except (FileNotFoundError, OSError, RuntimeError, ValueError) as error:
         print(f"Hand pose estimation failed: {error}", file=sys.stderr)
         return 1
