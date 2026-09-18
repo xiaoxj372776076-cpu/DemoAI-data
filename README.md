@@ -13,3 +13,6 @@ Data processing pipelines for DemoAI
 
 - [ASR operator](operators/asr/README.md): transcribe local video or audio with
   an open-source Whisper model and write timestamped JSON output.
+- [Image-text consistency operator](operators/image_text_consistency/README.md):
+  score how well a local image matches one or more texts with a Chinese CLIP
+  model.
